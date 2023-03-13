@@ -1,0 +1,69 @@
+MODULE MoveModule
+   ! PERS tooldata defaultToolData := [TRUE, [[2.6,46.6,43], [0.5,-0.5,0.5,0.5]], [0.4,[0,0,50],[1,0,0,0],0,0,0]];
+    PERS tooldata currentTool := [TRUE,[[0,0,0],[1,0,0,0]],[0.001,[0,0,0.001],[1,0,0,0],0,0,0]];    
+    CONST robtarget homePosition := [[200,100,100],[0.702704,0.0109979,0.710536,-0.0349841],[-1,-1,0,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    
+    VAR num xOffset := 0;
+    VAR num yOffset := 0;
+    VAR num zOffset := 0;
+    
+    VAR num xCoord := 0;
+    VAR num yCoord := 0;
+    VAR num zCoord := 0;
+    
+    VAR bool executeFlag := false;
+    VAR bool homeFlag := TRUE;
+    
+    VAR robtarget currentPosition;
+    
+    PROC main()
+        ResetMoveModule;
+        MoveFromHome;
+        UpdatePosition;
+       ! MoveJ Offs(homePosition,xCoord+50,yCoord,zCoord), v50, fine, tool0;
+        WHILE TRUE DO
+        
+                 !!   TPWrite "POSHOMESTART " \NUM:=xCoord;
+                
+             IF executeFlag THEN 
+                !UpdatePosition;
+                IF homeFlag THEN
+                    MoveFromHome;
+                ELSE
+                    MoveFromHere;
+                ENDIF
+                UpdatePosition;
+                executeFlag := FALSE;
+            ENDIF
+        ENDWHILE
+    ENDPROC
+    
+    PROC ResetMoveModule()
+        ConfL\Off;
+        ConfJ\Off;
+        xOffset := 0;
+        yOffset := 0;
+        zOffset := 0;
+        executeFlag := FALSE;
+    ENDPROC
+    
+    PROC UpdatePosition()
+        currentPosition := CRobT(\Tool:=tool0);
+        xCoord := Round((currentPosition.trans.x - 200)\Dec:=1);
+        yCoord := Round((currentPosition.trans.y - 100)\Dec:=1);
+        zCoord := Round((currentPosition.trans.z - 100)\Dec:=1);
+    ENDPROC
+    
+    PROC MoveFromHere()
+        MoveL Offs(currentPosition, xOffset, yOffset, zOffset), v50, fine, tool0;
+        xOffset := 0;
+        yOffset := 0;
+        zOffset := 0;
+    ENDPROC
+    
+    PROC MoveFromHome()
+       MoveJ Offs(homePosition,xCoord,yCoord,zCoord), v50, fine, tool0;
+      ! MoveJ Offs(homePosition,xCoord+10,yCoord,zCoord), v50, fine, tool0;
+        !MoveL Offs(homePosition, xOffset, yOffset, zOffset), v50, fine, defaultToolData;
+    ENDPROC
+ENDMODULE
